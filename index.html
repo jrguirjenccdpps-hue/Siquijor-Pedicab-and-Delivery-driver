@@ -40,6 +40,135 @@
             box-shadow: 0 0 50px rgba(0,0,0,0.1);
         }
 
+        /* LOGIN SCREEN */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #40E0D0 0%, #20B2AA 50%, #008B8B 100%);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-screen.hidden {
+            display: none !important;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 30px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+
+        .login-title {
+            font-size: 28px;
+            color: var(--ocean-blue);
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .login-subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #E0E0E0;
+            border-radius: 15px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: #F8F9FA;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--turquoise);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(64,224,208,0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #2ECC71 0%, #27AE60 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(46,204,113,0.4);
+        }
+
+        .login-btn:disabled {
+            background: #CCC;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .error-message {
+            background: rgba(255,107,107,0.1);
+            color: var(--coral);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            border: 1px solid rgba(255,107,107,0.3);
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .demo-info {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #E0E0E0;
+            font-size: 12px;
+            color: #999;
+        }
+
         /* Tropical Header */
         .header {
             background: var(--tropical-gradient);
@@ -722,7 +851,43 @@
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <!-- LOGIN SCREEN -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <div class="login-logo">🏝️</div>
+            <div class="login-title">Siquijor Rides</div>
+            <div class="login-subtitle">Driver Login Portal</div>
+
+            <div class="error-message" id="loginError">
+                <i class="fas fa-exclamation-circle"></i> <span id="errorText">Invalid credentials</span>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="userId">Driver ID</label>
+                    <input type="text" id="userId" class="form-input" placeholder="e.g., DRV001" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+
+            <div class="demo-info">
+                <strong>Demo Accounts:</strong><br>
+                Driver: DRV001 / driver123<br>
+                Driver: DRV002 / driver123
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div class="app-container" id="dashboard" style="display: none;">
         <div class="header">
             <div class="header-top">
                 <span style="color: white; font-size: 12px; opacity: 0.9;">🏝️ Siquijor Rides</span>
@@ -853,7 +1018,7 @@
         <div style="height: 100px;"></div>
     </div>
 
-    <div class="bottom-nav">
+    <div class="bottom-nav" id="bottomNav" style="display: none;">
         <div class="nav-item active" onclick="showSection('home')">
             <i class="fas fa-home"></i>
             <span>Home</span>
@@ -875,41 +1040,154 @@
     <div class="toast" id="toast">Action Completed! 🌴</div>
 
     <script>
-        const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwCDyfNM8hiMfD9v0u_CA0rt5oh-WYbgZzDT6PqEsMupAXx-2WDSnx--TqwaV2ZxCM/exec';
+        // IMPORTANT: Replace with your actual Google Apps Script Web App URL
+        const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzaseO1cpmkNgeOLZuevO_0lXuDQexa4dhYR67WBBhkRsfUntuzD8O79BC-zVjS-g4h/exec';
 
-        // Check authentication
-        const session = JSON.parse(localStorage.getItem('siquijorRides_session') || '{}');
-        if (!session.userId || session.role !== 'driver') {
-            // FIXED: Redirect to correct filename
-            window.location.href = 'index.html';
-        }
-
-        const DRIVER_ID = session.userId;
-        const DRIVER_NAME = session.name || 'Driver';
-        const PLATE_NUMBER = session.plateNumber || 'SIQ-0000';
-
-        // Set driver info
-        document.getElementById('driverName').textContent = DRIVER_NAME;
-        document.getElementById('plateNumber').textContent = PLATE_NUMBER;
-
+        // App State
+        let currentUser = null;
         let isOnline = true;
         let driverLocation = { lat: null, lng: null };
         let watchId = null;
         let availableBookings = [];
         let myTrips = [];
+        let onlineStartTime = null;
 
+        // Initialize App
         document.addEventListener('DOMContentLoaded', function() {
-            loadDriverData();
-            startGPSTracking();
-            fetchVerifiedBookings();
-            setInterval(fetchVerifiedBookings, 30000);
+            checkExistingSession();
         });
+
+        // ==================== AUTHENTICATION ====================
+
+        function checkExistingSession() {
+            const session = JSON.parse(localStorage.getItem('siquijorRides_session') || '{}');
+            if (session.userId && session.role === 'driver' && session.expires > Date.now()) {
+                // Valid session exists
+                currentUser = session;
+                showDashboard();
+                initializeDriverFeatures();
+            } else {
+                // No valid session, show login
+                localStorage.removeItem('siquijorRides_session');
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('bottomNav').style.display = 'none';
+        }
+
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('bottomNav').style.display = 'flex';
+
+            // Set driver info
+            document.getElementById('driverName').textContent = currentUser.name || 'Driver';
+            document.getElementById('plateNumber').textContent = currentUser.plateNumber || '---';
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const userId = document.getElementById('userId').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const errorDiv = document.getElementById('loginError');
+
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="spinner"></span> Logging in...';
+            errorDiv.classList.remove('show');
+
+            try {
+                const response = await fetch(GOOGLE_SHEETS_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: 'authenticate',
+                        role: 'driver',
+                        userId: userId,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Store session with expiry (24 hours)
+                    currentUser = {
+                        userId: data.userId,
+                        name: data.name,
+                        plateNumber: data.plateNumber,
+                        role: 'driver',
+                        expires: Date.now() + (24 * 60 * 60 * 1000)
+                    };
+
+                    localStorage.setItem('siquijorRides_session', JSON.stringify(currentUser));
+
+                    // Reset form
+                    document.getElementById('loginForm').reset();
+
+                    showToast('🏝️ Welcome back, ' + data.name + '!');
+                    showDashboard();
+                    initializeDriverFeatures();
+                } else {
+                    showLoginError(data.message || 'Invalid credentials');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showLoginError('Network error. Please check your connection.');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+            }
+        }
+
+        function showLoginError(message) {
+            const errorDiv = document.getElementById('loginError');
+            document.getElementById('errorText').textContent = message;
+            errorDiv.classList.add('show');
+        }
 
         function logout() {
             if (confirm('Are you sure you want to logout? 🌴')) {
+                // Update driver status to offline before logout
+                if (isOnline) {
+                    updateDriverStatus(false);
+                }
+
                 localStorage.removeItem('siquijorRides_session');
-                window.location.href = 'index.html';
+                currentUser = null;
+
+                // Clear intervals
+                if (window.bookingsInterval) clearInterval(window.bookingsInterval);
+                stopGPSTracking();
+
+                showLogin();
+                showToast('Logged out successfully 👋');
             }
+        }
+
+        // ==================== DRIVER FEATURES ====================
+
+        function initializeDriverFeatures() {
+            loadDriverData();
+            startGPSTracking();
+            fetchVerifiedBookings();
+
+            // Refresh bookings every 30 seconds
+            window.bookingsInterval = setInterval(fetchVerifiedBookings, 30000);
+
+            // Set online start time for stats
+            onlineStartTime = new Date();
+            updateOnlineHours();
+            setInterval(updateOnlineHours, 60000); // Update every minute
         }
 
         function toggleOnline() {
@@ -925,6 +1203,7 @@
                 showToast('🏝️ You are now ONLINE and ready for island adventures!');
                 startGPSTracking();
                 fetchVerifiedBookings();
+                onlineStartTime = new Date();
             } else {
                 toggle.classList.remove('active');
                 statusText.textContent = 'Offline';
@@ -933,20 +1212,19 @@
                 stopGPSTracking();
             }
 
-            updateDriverStatus();
+            updateDriverStatus(isOnline);
         }
 
-        // FIXED: Better GPS handling with error states
+        // ==================== GPS TRACKING ====================
+
         function startGPSTracking() {
             if (!navigator.geolocation) {
                 showGPSError('GPS not supported on this device');
                 return;
             }
 
-            // Request permission and start tracking
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    // Success - start watching
                     watchId = navigator.geolocation.watchPosition(
                         (position) => {
                             driverLocation = {
@@ -960,15 +1238,11 @@
                             sendLocationToServer();
                             clearGPSError();
                         },
-                        (error) => {
-                            handleGPSError(error);
-                        },
+                        (error) => handleGPSError(error),
                         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                     );
                 },
-                (error) => {
-                    handleGPSError(error);
-                },
+                (error) => handleGPSError(error),
                 { enableHighAccuracy: true, timeout: 10000 }
             );
         }
@@ -1016,31 +1290,39 @@
             }
         }
 
-        function sendLocationToServer() {
-            if (!driverLocation.lat) return;
+        async function sendLocationToServer() {
+            if (!driverLocation.lat || !currentUser) return;
 
-            fetch(GOOGLE_SHEETS_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    type: 'driver_location',
-                    driverId: DRIVER_ID,
-                    location: driverLocation
-                })
-            }).catch(() => {
-                // Silently fail - offline mode
-            });
+            try {
+                await fetch(GOOGLE_SHEETS_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'driver_location',
+                        driverId: currentUser.userId,
+                        location: driverLocation
+                    })
+                });
+            } catch (error) {
+                console.log('Location update failed (offline mode)');
+            }
         }
 
+        // ==================== BOOKINGS ====================
+
         async function fetchVerifiedBookings() {
-            if (!isOnline) return;
+            if (!isOnline || !currentUser) return;
 
             try {
                 const response = await fetch(GOOGLE_SHEETS_URL + '?action=get_verified_bookings');
                 const data = await response.json();
 
-                if (data.bookings && data.bookings.length > 0) {
-                    availableBookings = data.bookings;
-                    renderBookings(data.bookings);
+                if (data.success && data.bookings) {
+                    availableBookings = data.bookings.filter(b => 
+                        !myTrips.find(t => t.id === b.id)
+                    );
+                    renderBookings(availableBookings);
                 } else {
                     renderEmptyState();
                 }
@@ -1049,15 +1331,20 @@
                     '🌴 Last updated: ' + new Date().toLocaleTimeString();
 
             } catch (error) {
+                console.error('Error fetching bookings:', error);
+                // Use cached data if available
                 const cached = localStorage.getItem('verifiedBookings');
-                if (cached) renderBookings(JSON.parse(cached));
+                if (cached) {
+                    availableBookings = JSON.parse(cached);
+                    renderBookings(availableBookings);
+                }
             }
         }
 
         function renderBookings(bookings) {
             const container = document.getElementById('pendingBookings');
 
-            if (bookings.length === 0) {
+            if (!bookings || bookings.length === 0) {
                 renderEmptyState();
                 return;
             }
@@ -1147,12 +1434,14 @@
             try {
                 const response = await fetch(GOOGLE_SHEETS_URL, {
                     method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         type: 'accept_booking',
                         bookingId: bookingId,
-                        driverId: DRIVER_ID,
-                        driverName: DRIVER_NAME,
-                        plateNumber: PLATE_NUMBER,
+                        driverId: currentUser.userId,
+                        driverName: currentUser.name,
+                        plateNumber: currentUser.plateNumber,
                         timestamp: new Date().toISOString()
                     })
                 });
@@ -1164,20 +1453,28 @@
 
                     const booking = availableBookings.find(b => b.id === bookingId);
                     if (booking) {
-                        booking.driverName = DRIVER_NAME;
-                        booking.plateNumber = PLATE_NUMBER;
+                        booking.driverName = currentUser.name;
+                        booking.plateNumber = currentUser.plateNumber;
                         booking.status = 'accepted';
                         myTrips.push(booking);
                         renderActiveTrips();
+
+                        // Save to local storage for persistence
+                        localStorage.setItem('myTrips_' + currentUser.userId, JSON.stringify(myTrips));
                     }
 
                     availableBookings = availableBookings.filter(b => b.id !== bookingId);
                     renderBookings(availableBookings);
                     updateEarnings(booking.fare * 0.8);
+                } else {
+                    showToast('❌ ' + (result.message || 'Error accepting booking'));
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Accept';
                 }
 
             } catch (error) {
-                showToast('❌ Error accepting booking');
+                console.error('Error accepting booking:', error);
+                showToast('❌ Network error. Please try again.');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-check"></i> Accept';
             }
@@ -1248,59 +1545,100 @@
 
         async function completeTrip(tripId) {
             try {
-                await fetch(GOOGLE_SHEETS_URL, {
+                const response = await fetch(GOOGLE_SHEETS_URL, {
                     method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         type: 'complete_trip',
                         tripId: tripId,
-                        driverId: DRIVER_ID,
+                        driverId: currentUser.userId,
                         timestamp: new Date().toISOString()
                     })
                 });
 
-                showToast('🎉 Trip completed! Great job! 🌴');
-                myTrips = myTrips.filter(t => t.id !== tripId);
-                renderActiveTrips();
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('🎉 Trip completed! Great job! 🌴');
+                    myTrips = myTrips.filter(t => t.id !== tripId);
+                    localStorage.setItem('myTrips_' + currentUser.userId, JSON.stringify(myTrips));
+                    renderActiveTrips();
+                } else {
+                    showToast('❌ Error completing trip');
+                }
 
             } catch (error) {
-                showToast('Trip completed! 🏝️');
+                console.error('Error completing trip:', error);
+                // Fallback: complete locally even if server fails
+                showToast('Trip completed locally (sync pending) 🏝️');
                 myTrips = myTrips.filter(t => t.id !== tripId);
+                localStorage.setItem('myTrips_' + currentUser.userId, JSON.stringify(myTrips));
                 renderActiveTrips();
             }
         }
 
-        function updateEarnings(amount) {
-            let current = parseFloat(localStorage.getItem('todayEarnings_' + DRIVER_ID) || '0');
-            current += amount;
-            localStorage.setItem('todayEarnings_' + DRIVER_ID, current);
-            document.getElementById('todayEarnings').textContent = '₱' + Math.floor(current);
+        // ==================== STATS & DATA ====================
 
-            let trips = parseInt(localStorage.getItem('todayTrips_' + DRIVER_ID) || '0');
+        function updateEarnings(amount) {
+            if (!currentUser) return;
+
+            const key = 'todayEarnings_' + currentUser.userId;
+            let current = parseFloat(localStorage.getItem(key) || '0');
+            current += amount;
+            localStorage.setItem(key, current);
+            document.getElementById('todayEarnings').textContent = '₱' + Math.floor(current);
+            document.getElementById('netEarnings').textContent = '₱' + Math.floor(current);
+
+            const tripsKey = 'todayTrips_' + currentUser.userId;
+            let trips = parseInt(localStorage.getItem(tripsKey) || '0');
             trips += 1;
-            localStorage.setItem('todayTrips_' + DRIVER_ID, trips);
+            localStorage.setItem(tripsKey, trips);
             document.getElementById('totalTrips').textContent = trips;
         }
 
         function loadDriverData() {
-            const earnings = parseFloat(localStorage.getItem('todayEarnings_' + DRIVER_ID) || '0');
-            const trips = parseInt(localStorage.getItem('todayTrips_' + DRIVER_ID) || '0');
+            if (!currentUser) return;
+
+            const earnings = parseFloat(localStorage.getItem('todayEarnings_' + currentUser.userId) || '0');
+            const trips = parseInt(localStorage.getItem('todayTrips_' + currentUser.userId) || '0');
 
             document.getElementById('todayEarnings').textContent = '₱' + Math.floor(earnings);
+            document.getElementById('netEarnings').textContent = '₱' + Math.floor(earnings);
             document.getElementById('totalTrips').textContent = trips;
+
+            // Load saved trips
+            const savedTrips = localStorage.getItem('myTrips_' + currentUser.userId);
+            if (savedTrips) {
+                myTrips = JSON.parse(savedTrips);
+                renderActiveTrips();
+            }
         }
 
-        function updateDriverStatus() {
+        function updateDriverStatus(online) {
+            if (!currentUser) return;
+
             fetch(GOOGLE_SHEETS_URL, {
                 method: 'POST',
+                mode: 'cors',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     type: 'driver_status',
-                    driverId: DRIVER_ID,
-                    status: isOnline ? 'online' : 'offline',
+                    driverId: currentUser.userId,
+                    status: online ? 'online' : 'offline',
                     timestamp: new Date().toISOString()
                 })
             }).catch(() => {
-                // Offline fallback - status will sync when online
+                console.log('Status update failed (will retry)');
             });
+        }
+
+        function updateOnlineHours() {
+            if (!onlineStartTime) return;
+
+            const now = new Date();
+            const diff = Math.floor((now - onlineStartTime) / 1000 / 60 / 60);
+            document.getElementById('onlineHours').textContent = diff + 'h';
         }
 
         function refreshBookings() {
@@ -1320,7 +1658,11 @@
         }
 
         function showSection(section) {
-            showToast(section + ' section coming soon! 🌴');
+            if (section === 'home') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                showToast(section.charAt(0).toUpperCase() + section.slice(1) + ' section coming soon! 🌴');
+            }
         }
     </script>
 </body>
