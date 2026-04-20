@@ -214,14 +214,6 @@
             background: var(--success-green);
         }
 
-        .order-card.claimed {
-            border-color: var(--ocean-blue);
-        }
-
-        .order-card.claimed::before {
-            background: var(--ocean-blue);
-        }
-
         .order-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
@@ -564,7 +556,7 @@
             padding-bottom: 80px;
         }
 
-        /* Pull to refresh indicator */
+        /* Refresh indicator */
         .refresh-indicator {
             text-align: center;
             padding: 10px;
@@ -719,15 +711,15 @@
 
         <!-- Bottom Navigation -->
         <nav class="bottom-nav">
-            <button class="nav-item active" onclick="switchTab('orders')">
+            <button class="nav-item active" onclick="switchTab('orders', this)">
                 <i class="fas fa-broadcast-tower"></i>
                 <span>Orders</span>
             </button>
-            <button class="nav-item" onclick="switchTab('trips')">
+            <button class="nav-item" onclick="switchTab('trips', this)">
                 <i class="fas fa-route"></i>
                 <span>My Trips</span>
             </button>
-            <button class="nav-item" onclick="switchTab('profile')">
+            <button class="nav-item" onclick="switchTab('profile', this)">
                 <i class="fas fa-user"></i>
                 <span>Profile</span>
             </button>
@@ -878,7 +870,7 @@
                 }
             } catch (error) {
                 console.error('Load orders error:', error);
-                // Demo data
+                // Demo data for testing
                 availableOrders = [
                     {
                         id: 'BK123457',
@@ -996,8 +988,8 @@
                     updateStats();
                     showToast('✅ Order claimed! Go to My Trips.');
                     
-                    // Switch to trips tab
-                    switchTab('trips');
+                    // Switch to trips tab - FIXED: pass null for element
+                    switchTab('trips', null);
                 } else {
                     throw new Error(result.message);
                 }
@@ -1018,7 +1010,7 @@
                 renderTrips();
                 updateStats();
                 showToast('✅ Order claimed locally!');
-                switchTab('trips');
+                switchTab('trips', null);
             }
         }
 
@@ -1187,18 +1179,33 @@
         }
 
         // ============================================
-        // NAVIGATION
+        // NAVIGATION - FIXED: Proper tab switching
         // ============================================
-        function switchTab(tab) {
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            event.target.closest('.nav-item').classList.add('active');
-            
+        function switchTab(tab, clickedElement) {
+            // Hide all sections
             document.getElementById('ordersSection').classList.add('hidden');
             document.getElementById('tripsSection').classList.add('hidden');
             document.getElementById('profileSection').classList.add('hidden');
             
+            // Show selected section
             document.getElementById(tab + 'Section').classList.remove('hidden');
             
+            // Update nav items if clicked from nav
+            if (clickedElement) {
+                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                clickedElement.classList.add('active');
+            } else {
+                // Programmatic switch - update nav without event
+                document.querySelectorAll('.nav-item').forEach((item, index) => {
+                    item.classList.remove('active');
+                    const tabs = ['orders', 'trips', 'profile'];
+                    if (tabs[index] === tab) {
+                        item.classList.add('active');
+                    }
+                });
+            }
+            
+            // Render trips if switching to trips tab
             if (tab === 'trips') {
                 renderTrips();
             }
